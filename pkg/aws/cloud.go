@@ -17,6 +17,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const appMeshAPIThrottleQPS = time.Second / 20
+
 type CloudAPI interface {
 	AppMeshAPI
 	CloudMapAPI
@@ -91,6 +93,7 @@ func newAWSSession(cfg *aws.Config, stats *metrics.Recorder) (*session.Session, 
 		stats.RecordAWSAPIRequestError("session", "NewSession", getAWSErrorCode(err))
 		return nil, err
 	}
+	NewRequestThrottler().WithServiceThrottleRate(appmesh.ServiceName, appMeshAPIThrottleQPS).AttachToSession(session)
 
 	session.Handlers.Send.PushFront(func(r *request.Request) {
 		stats.RecordAWSAPIRequestCount(r.ClientInfo.ServiceName, r.Operation.Name)
