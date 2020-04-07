@@ -18,16 +18,16 @@ package main
 
 import (
 	"flag"
-	"os"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
+	appmeshwebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/appmesh"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -98,6 +98,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualRouter")
 		os.Exit(1)
 	}
+
+	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
+	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
