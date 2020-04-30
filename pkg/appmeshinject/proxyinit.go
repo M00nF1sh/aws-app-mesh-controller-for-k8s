@@ -2,7 +2,10 @@ package appmeshinject
 
 import (
 	"encoding/json"
+	"fmt"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 )
 
 const initContainerTemplate = `
@@ -56,18 +59,27 @@ const initContainerTemplate = `
 `
 
 type ProxyinitMutator struct {
+	vn *appmesh.VirtualNode
 }
 
 func (m *ProxyinitMutator) mutate(pod *corev1.Pod) error {
 	if isAppMeshCNIEnabled(pod) {
 		return nil
 	}
+
+	var ports []string
+	for _, listener := range m.vn.Spec.Listeners {
+		ports = append(ports, fmt.Sprintf("%v", listener.PortMapping.Port))
+	}
+	if len(ports) == 0 {
+		ports = []string{"0"}
+	}
 	meta := struct {
 		Config
 		Ports string
 	}{
 		Config: updateConfigFromPodAnnotations(config, pod),
-		Ports:  getPortsFromContainers(pod.Spec.Containers),
+		Ports:  strings.Join(ports, ","),
 	}
 
 	proxyInit, err := renderTemplate("init", initContainerTemplate, meta)

@@ -49,7 +49,7 @@ func (c *AppMeshCNIMutator) mutate(pod *corev1.Pod) error {
 	return nil
 }
 
-func InjectAppMeshPatches(vn *appmesh.VirtualNode, pod *corev1.Pod) error {
+func InjectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
 	if !shouldInject(pod) {
 		injectLog.Info("Not injecting sidecars for pod ", pod.Name)
 		return nil
@@ -73,8 +73,8 @@ func InjectAppMeshPatches(vn *appmesh.VirtualNode, pod *corev1.Pod) error {
 	// List out all the mutators in sequence
 	var mutators = []PodMutator{
 		&AppMeshCNIMutator{},
-		&ProxyinitMutator{},
-		&EnvoyMutator{vn: *vn},
+		&ProxyinitMutator{vn: vn},
+		&EnvoyMutator{ms: ms, vn: vn},
 		&XrayMutator{},
 		&DatadogMutator{},
 		&JaegerMutator{},

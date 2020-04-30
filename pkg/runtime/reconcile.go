@@ -11,7 +11,6 @@ func HandleReconcileError(err error, log logr.Logger) (ctrl.Result, error) {
 	if err == nil {
 		return ctrl.Result{}, nil
 	}
-
 	var requeueAfterErr *RequeueAfterError
 	if errors.As(err, &requeueAfterErr) {
 		log.V(2).Info("requeue after due to error", "duration", requeueAfterErr.Duration(), "error", requeueAfterErr.Unwrap())

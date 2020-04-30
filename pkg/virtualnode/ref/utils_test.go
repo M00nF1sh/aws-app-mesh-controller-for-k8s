@@ -1,4 +1,4 @@
-package virtualnode
+package ref
 
 import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"

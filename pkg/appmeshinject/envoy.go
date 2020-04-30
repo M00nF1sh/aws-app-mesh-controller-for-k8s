@@ -3,7 +3,7 @@ package appmeshinject
 import (
 	"encoding/json"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -71,12 +71,13 @@ const envoyContainerTemplate = `
 `
 
 type EnvoyMutator struct {
-	vn appmesh.VirtualNode
+	ms *appmesh.Mesh
+	vn *appmesh.VirtualNode
 }
 
 func (m *EnvoyMutator) mutate(pod *corev1.Pod) error {
-	meshName := m.vn.Spec.MeshRef.Name
-	virtualNodeName := k8s.NamespacedName(&m.vn).String()
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	sidecarMeta := struct {
 		Config
 		MeshName        string

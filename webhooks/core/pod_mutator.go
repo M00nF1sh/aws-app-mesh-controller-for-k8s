@@ -4,6 +4,7 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshinject "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	corev1 "k8s.io/api/core/v1"
@@ -15,8 +16,9 @@ import (
 const apiPathMutatePod = "/mutate-v1-pod"
 
 // NewPodMutator returns a mutator for Pod.
-func NewPodMutator(vnMembershipDesignator virtualnode.MembershipDesignator) *podMutator {
+func NewPodMutator(meshRefResolver mesh.ReferenceResolver, vnMembershipDesignator virtualnode.MembershipDesignator) *podMutator {
 	return &podMutator{
+		meshRefResolver:        meshRefResolver,
 		vnMembershipDesignator: vnMembershipDesignator,
 	}
 }
@@ -24,6 +26,7 @@ func NewPodMutator(vnMembershipDesignator virtualnode.MembershipDesignator) *pod
 var _ webhook.Mutator = &podMutator{}
 
 type podMutator struct {
+	meshRefResolver        mesh.ReferenceResolver
 	vnMembershipDesignator virtualnode.MembershipDesignator
 }
 
@@ -37,10 +40,15 @@ func (m *podMutator) MutateCreate(ctx context.Context, obj runtime.Object) (runt
 	if err != nil {
 		return nil, err
 	}
-	if vn == nil {
+	if vn == nil || vn.Spec.MeshRef == nil {
 		return obj, nil
 	}
-	if err := m.injectAppMeshPatches(ctx, vn, pod); err != nil {
+
+	ms, err := m.meshRefResolver.Resolve(ctx, *vn.Spec.MeshRef)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.injectAppMeshPatches(ctx, ms, vn, pod); err != nil {
 		return nil, err
 	}
 	return pod, nil
@@ -50,8 +58,8 @@ func (m *podMutator) MutateUpdate(ctx context.Context, obj runtime.Object, oldOb
 	return obj, nil
 }
 
-func (m *podMutator) injectAppMeshPatches(ctx context.Context, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
-	return appmeshinject.InjectAppMeshPatches(vn, pod)
+func (m *podMutator) injectAppMeshPatches(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
+	return appmeshinject.InjectAppMeshPatches(ms, vn, pod)
 }
 
 // +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create,versions=v1,name=mpod.appmesh.k8s.aws
