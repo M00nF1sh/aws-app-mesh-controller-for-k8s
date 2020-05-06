@@ -1,0 +1,306 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-4cabd2e
+  labels:
+    mesh: mesh-demo-4cabd2e
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: Mesh
+metadata:
+  name: mesh-demo-4cabd2e
+spec:
+  namespaceSelector:
+    matchLabels:
+      mesh: mesh-demo-4cabd2e
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualNode      # this virtualNode don't have a listener, so envoy don't don't intercept traffic. (also we don't need a serviceDiscovery since we have no listener)
+metadata:
+  namespace: demo-4cabd2e
+  name: colorgateway
+spec:
+  podSelector: # matches labels on pod
+    matchLabels:
+      app: colorgateway
+  backends:
+    - virtualService:
+        virtualServiceRef:
+          name: colorteller
+  logging:
+    accessLog:
+      file:
+        path: /dev/stdout
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: demo-4cabd2e
+  name: colorgateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorgateway
+  template:
+    metadata:
+      labels:
+        app: colorgateway
+    spec:
+      securityContext:
+        fsGroup: 1337
+      containers:
+        - name: colorgateway
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/gateway:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR_TELLER_ENDPOINT"
+              value: "colorteller.demo-4cabd2e:9080"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: demo-4cabd2e
+  name: colorgateway    # this service provides entry point to our gateway, access it in your browser.
+spec:
+  ports:
+    - port: 80
+      targetPort: 9080
+      name: http
+  selector:
+    app: colorgateway
+  type: LoadBalancer
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualNode
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-black
+spec:
+  podSelector:
+    matchLabels:
+      app: colorteller
+      version: black
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostname: colorteller-black.demo-4cabd2e.svc.cluster.local  # matches the DNSName of your service.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-black
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: black
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: black
+    spec:
+      securityContext:
+        fsGroup: 1337
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "black"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-black   # provides dns serviceDiscovery for your virtualNode
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: black
+  type: ClusterIP
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualNode
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-white
+spec:
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostname: colorteller-white.demo-4cabd2e.svc.cluster.local
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-white
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: white
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: white
+    spec:
+      securityContext:
+        fsGroup: 1337
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "white"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-white
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: white
+  type: ClusterIP
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualNode
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-blue
+spec:
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostname: colorteller-blue.demo-4cabd2e.svc.cluster.local
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: blue
+    spec:
+      securityContext:
+        fsGroup: 1337
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "blue"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller-blue
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: blue
+  type: ClusterIP
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualRouter
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller
+spec:
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  routes:
+    - name: color-route
+      httpRoute:
+        match:
+          prefix: /
+        action:
+          weightedTargets:
+            - virtualNodeRef:
+                # namespace: demo-4cabd2e optional
+                name: colorteller-black
+              weight: 1
+            - virtualNodeRef:
+                # namespace: demo-4cabd2e optional
+                name: colorteller-white
+              weight: 2
+            - virtualNodeRef:
+                # namespace: demo-4cabd2e optional
+                name: colorteller-blue
+              weight: 3
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualService
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller
+spec:
+  provider:
+    virtualRouter:
+      virtualRouterRef:
+        # namespace: demo-4cabd2e optional
+        name: colorteller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: demo-4cabd2e
+  name: colorteller # used to provide a DNS entry for colorteller VS
+spec:
+  ports:
+    - port: 9080
+      name: http
