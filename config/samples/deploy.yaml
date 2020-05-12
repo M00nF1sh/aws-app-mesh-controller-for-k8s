@@ -1092,15 +1092,14 @@ spec:
                     properties:
                       healthyThreshold:
                         description: The number of consecutive successful health checks
-                          that must occur before declaring listener healthy. If unspecified,
-                          defaults to be 10
+                          that must occur before declaring listener healthy.
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
                       intervalMillis:
                         description: The time period in milliseconds between each
-                          health check execution. If unspecified, defaults to be 30000
+                          health check execution.
                         format: int64
                         maximum: 300000
                         minimum: 5000
@@ -1112,16 +1111,12 @@ spec:
                         type: string
                       port:
                         description: The destination port for the health check request.
-                          If unspecified, defaults to be same as port defined in the
-                          PortMapping for the listener.
                         format: int64
                         maximum: 65535
                         minimum: 1
                         type: integer
                       protocol:
-                        description: The protocol for the health check request If
-                          unspecified, defaults to be same as protocol defined in
-                          the PortMapping for the listener.
+                        description: The protocol for the health check request
                         enum:
                         - grpc
                         - http
@@ -1130,8 +1125,7 @@ spec:
                         type: string
                       timeoutMillis:
                         description: The amount of time to wait when receiving a response
-                          from the health check, in milliseconds. If unspecified,
-                          defaults to be 5000
+                          from the health check, in milliseconds.
                         format: int64
                         maximum: 60000
                         minimum: 2000
@@ -1139,11 +1133,16 @@ spec:
                       unhealthyThreshold:
                         description: The number of consecutive failed health checks
                           that must occur before declaring a virtual node unhealthy.
-                          If unspecified, defaults to be 2
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
+                    required:
+                    - healthyThreshold
+                    - intervalMillis
+                    - protocol
+                    - timeoutMillis
+                    - unhealthyThreshold
                     type: object
                   portMapping:
                     description: The port mapping information for the listener.
@@ -2370,6 +2369,24 @@ webhooks:
     service:
       name: appmesh-webhook-service
       namespace: appmesh-system
+      path: /mutate-appmesh-k8s-aws-v1beta2-gatewayroute
+  failurePolicy: Fail
+  name: mgatewayroute.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - gatewayroutes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: appmesh-webhook-service
+      namespace: appmesh-system
       path: /mutate-appmesh-k8s-aws-v1beta2-mesh
   failurePolicy: Fail
   name: mmesh.appmesh.k8s.aws
@@ -2540,6 +2557,14 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - appmesh.k8s.aws
   resources:
@@ -2770,6 +2795,9 @@ spec:
       control-plane: controller-manager
   template:
     metadata:
+      annotations:
+        prometheus.io/port: "8080"
+        prometheus.io/scrape: "true"
       labels:
         control-plane: controller-manager
     spec:
@@ -2778,7 +2806,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: m00nf1sh/misc:appmesh-rc-b5
+        image: m00nf1sh/misc:appmesh-v2-rc30
         name: manager
         ports:
         - containerPort: 9443
@@ -2787,10 +2815,10 @@ spec:
         resources:
           limits:
             cpu: 100m
-            memory: 30Mi
+            memory: 300Mi
           requests:
             cpu: 100m
-            memory: 20Mi
+            memory: 200Mi
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
@@ -2832,6 +2860,24 @@ metadata:
   creationTimestamp: null
   name: appmesh-validating-webhook-configuration
 webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: appmesh-webhook-service
+      namespace: appmesh-system
+      path: /validate-appmesh-k8s-aws-v1beta2-gatewayroute
+  failurePolicy: Fail
+  name: vgatewayroute.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - gatewayroutes
 - clientConfig:
     caBundle: Cg==
     service:
