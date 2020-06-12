@@ -2,24 +2,36 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: manager
   name: appmesh-system
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: gatewayroutes.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.gatewayRouteARN
+    description: The AppMesh GatewayRoute object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: GatewayRoute
     listKind: GatewayRouteList
     plural: gatewayroutes
     singular: gatewayroute
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: GatewayRoute is the Schema for the gatewayroutes API
@@ -59,9 +71,17 @@ spec:
                           description: The virtual service to associate with the gateway
                             route target.
                           properties:
+                            virtualServiceARN:
+                              description: Amazon Resource Name to AppMesh VirtualService
+                                object to associate with the gateway route virtual
+                                service target. Exactly one of 'virtualServiceRef'
+                                or 'virtualServiceARN' must be specified.
+                              type: string
                             virtualServiceRef:
-                              description: The virtual service reference to associate
-                                with the gateway route virtual service target.
+                              description: Reference to Kubernetes VirtualService
+                                CR in cluster to associate with the gateway route
+                                virtual service target. Exactly one of 'virtualServiceRef'
+                                or 'virtualServiceARN' must be specified.
                               properties:
                                 name:
                                   description: Name is the name of VirtualService
@@ -75,8 +95,6 @@ spec:
                               required:
                               - name
                               type: object
-                          required:
-                          - virtualServiceRef
                           type: object
                       required:
                       - virtualService
@@ -113,9 +131,17 @@ spec:
                           description: The virtual service to associate with the gateway
                             route target.
                           properties:
+                            virtualServiceARN:
+                              description: Amazon Resource Name to AppMesh VirtualService
+                                object to associate with the gateway route virtual
+                                service target. Exactly one of 'virtualServiceRef'
+                                or 'virtualServiceARN' must be specified.
+                              type: string
                             virtualServiceRef:
-                              description: The virtual service reference to associate
-                                with the gateway route virtual service target.
+                              description: Reference to Kubernetes VirtualService
+                                CR in cluster to associate with the gateway route
+                                virtual service target. Exactly one of 'virtualServiceRef'
+                                or 'virtualServiceARN' must be specified.
                               properties:
                                 name:
                                   description: Name is the name of VirtualService
@@ -129,8 +155,6 @@ spec:
                               required:
                               - name
                               type: object
-                          required:
-                          - virtualServiceRef
                           type: object
                       required:
                       - virtualService
@@ -168,9 +192,17 @@ spec:
                           description: The virtual service to associate with the gateway
                             route target.
                           properties:
+                            virtualServiceARN:
+                              description: Amazon Resource Name to AppMesh VirtualService
+                                object to associate with the gateway route virtual
+                                service target. Exactly one of 'virtualServiceRef'
+                                or 'virtualServiceARN' must be specified.
+                              type: string
                             virtualServiceRef:
-                              description: The virtual service reference to associate
-                                with the gateway route virtual service target.
+                              description: Reference to Kubernetes VirtualService
+                                CR in cluster to associate with the gateway route
+                                virtual service target. Exactly one of 'virtualServiceRef'
+                                or 'virtualServiceARN' must be specified.
                               properties:
                                 name:
                                   description: Name is the name of VirtualService
@@ -184,8 +216,6 @@ spec:
                               required:
                               - name
                               type: object
-                          required:
-                          - virtualServiceRef
                           type: object
                       required:
                       - virtualService
@@ -275,9 +305,13 @@ spec:
                 type: object
               type: array
             gatewayRouteARN:
-              description: GatewayRouteARNs is a map of AppMesh GatewayRoute objects'
-                Amazon Resource Names, indexed by gatewayRoute name.
+              description: GatewayRouteARN is the AppMesh GatewayRoute object's Amazon
+                Resource Name
               type: string
+            observedGeneration:
+              description: The generation observed by the GatewayRoute controller.
+              format: int64
+              type: integer
           type: object
       type: object
   version: v1beta2
@@ -296,10 +330,18 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: meshes.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.meshARN
+    description: The AppMesh Mesh object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
     kind: Mesh
@@ -307,6 +349,8 @@ spec:
     plural: meshes
     singular: mesh
   scope: Cluster
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Mesh is the Schema for the meshes API
@@ -428,6 +472,10 @@ spec:
             meshARN:
               description: MeshARN is the AppMesh Mesh object's Amazon Resource Name
               type: string
+            observedGeneration:
+              description: The generation observed by the Mesh controller.
+              format: int64
+              type: integer
           type: object
       type: object
   version: v1beta2
@@ -446,17 +494,29 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: virtualgateways.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.virtualGatewayARN
+    description: The AppMesh VirtualGateway object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: VirtualGateway
     listKind: VirtualGatewayList
     plural: virtualgateways
     singular: virtualgateway
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualGateway is the Schema for the virtualgateways API
@@ -565,15 +625,14 @@ spec:
                     properties:
                       healthyThreshold:
                         description: The number of consecutive successful health checks
-                          that must occur before declaring listener healthy. If unspecified,
-                          defaults to be 10
+                          that must occur before declaring listener healthy.
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
                       intervalMillis:
                         description: The time period in milliseconds between each
-                          health check execution. If unspecified, defaults to be 30000
+                          health check execution.
                         format: int64
                         maximum: 300000
                         minimum: 5000
@@ -585,16 +644,12 @@ spec:
                         type: string
                       port:
                         description: The destination port for the health check request.
-                          If unspecified, defaults to be same as port defined in the
-                          PortMapping for the listener.
                         format: int64
                         maximum: 65535
                         minimum: 1
                         type: integer
                       protocol:
-                        description: The protocol for the health check request If
-                          unspecified, defaults to be same as protocol defined in
-                          the PortMapping for the listener.
+                        description: The protocol for the health check request
                         enum:
                         - grpc
                         - http
@@ -602,8 +657,7 @@ spec:
                         type: string
                       timeoutMillis:
                         description: The amount of time to wait when receiving a response
-                          from the health check, in milliseconds. If unspecified,
-                          defaults to be 5000
+                          from the health check, in milliseconds.
                         format: int64
                         maximum: 60000
                         minimum: 2000
@@ -611,11 +665,15 @@ spec:
                       unhealthyThreshold:
                         description: The number of consecutive failed health checks
                           that must occur before declaring a virtual Gateway unhealthy.
-                          If unspecified, defaults to be 2
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
+                    required:
+                    - intervalMillis
+                    - protocol
+                    - timeoutMillis
+                    - unhealthyThreshold
                     type: object
                   logging:
                     description: The inbound and outbound access logging information
@@ -776,8 +834,10 @@ spec:
                   type: object
               type: object
             podSelector:
-              description: PodSelector selects Pods using labels to designate VirtualGateway
-                membership. if unspecified or empty, it selects no pods.
+              description: "PodSelector selects Pods using labels to designate VirtualGateway
+                membership. This field follows standard label selector semantics:
+                \tif present but empty, it selects all pods within namespace. \tif
+                absent, it selects no pod."
               properties:
                 matchExpressions:
                   description: matchExpressions is a list of label selector requirements.
@@ -850,6 +910,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualGateway controller.
+              format: int64
+              type: integer
             virtualGatewayARN:
               description: VirtualGatewayARN is the AppMesh VirtualGateway object's
                 Amazon Resource Name
@@ -872,17 +936,29 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: virtualnodes.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.virtualNodeARN
+    description: The AppMesh VirtualNode object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: VirtualNode
     listKind: VirtualNodeList
     plural: virtualnodes
     singular: virtualnode
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualNode is the Schema for the virtualnodes API
@@ -1059,9 +1135,17 @@ spec:
                             - validation
                             type: object
                         type: object
+                      virtualServiceARN:
+                        description: Amazon Resource Name to AppMesh VirtualService
+                          object that is acting as a virtual node backend. Exactly
+                          one of 'virtualServiceRef' or 'virtualServiceARN' must be
+                          specified.
+                        type: string
                       virtualServiceRef:
-                        description: The VirtualService that is acting as a virtual
-                          node backend.
+                        description: Reference to Kubernetes VirtualService CR in
+                          cluster that is acting as a virtual node backend. Exactly
+                          one of 'virtualServiceRef' or 'virtualServiceARN' must be
+                          specified.
                         properties:
                           name:
                             description: Name is the name of VirtualService CR
@@ -1074,8 +1158,6 @@ spec:
                         required:
                         - name
                         type: object
-                    required:
-                    - virtualServiceRef
                     type: object
                 required:
                 - virtualService
@@ -1164,6 +1246,158 @@ spec:
                     required:
                     - port
                     - protocol
+                    type: object
+                  timeout:
+                    description: A reference to an object that represents
+                    properties:
+                      grpc:
+                        description: Specifies grpc timeout information for the virtual
+                          node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                      http:
+                        description: Specifies http timeout information for the virtual
+                          node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                      http2:
+                        description: Specifies http2 information for the virtual node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                      tcp:
+                        description: Specifies tcp timeout information for the virtual
+                          node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
                     type: object
                   tls:
                     description: A reference to an object that represents the Transport
@@ -1365,18 +1599,6 @@ spec:
         status:
           description: VirtualNodeStatus defines the observed state of VirtualNode
           properties:
-            awsCloudMapServiceStatus:
-              description: AWSCloudMapServiceStatus is AWS CloudMap Service object's
-                info
-              properties:
-                namespaceID:
-                  description: NamespaceID is AWS CloudMap Service object's namespace
-                    Id
-                  type: string
-                serviceID:
-                  description: ServiceID is AWS CloudMap Service object's Id
-                  type: string
-              type: object
             conditions:
               description: The current VirtualNode status.
               items:
@@ -1404,6 +1626,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualNode controller.
+              format: int64
+              type: integer
             virtualNodeARN:
               description: VirtualNodeARN is the AppMesh VirtualNode object's Amazon
                 Resource Name
@@ -1426,17 +1652,29 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: virtualrouters.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.virtualRouterARN
+    description: The AppMesh VirtualRouter object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: VirtualRouter
     listKind: VirtualRouterList
     plural: virtualrouters
     singular: virtualrouter
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualRouter is the Schema for the virtualrouters API
@@ -1530,9 +1768,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -1554,7 +1800,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -1702,6 +1947,47 @@ spec:
                         - maxRetries
                         - perRetryTimeout
                         type: object
+                      timeout:
+                        description: An object that represents a grpc timeout.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
                     required:
                     - action
                     - match
@@ -1720,9 +2006,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -1744,7 +2038,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -1893,6 +2186,47 @@ spec:
                         required:
                         - maxRetries
                         - perRetryTimeout
+                        type: object
+                      timeout:
+                        description: An object that represents a http timeout.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
                         type: object
                     required:
                     - action
@@ -1912,9 +2246,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -1936,7 +2278,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -2085,6 +2426,47 @@ spec:
                         required:
                         - maxRetries
                         - perRetryTimeout
+                        type: object
+                      timeout:
+                        description: An object that represents a http timeout.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
                         type: object
                     required:
                     - action
@@ -2112,9 +2494,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -2136,7 +2526,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -2144,6 +2533,28 @@ spec:
                             type: array
                         required:
                         - weightedTargets
+                        type: object
+                      timeout:
+                        description: An object that represents a tcp timeout.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
                         type: object
                     required:
                     - action
@@ -2183,6 +2594,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualRouter controller.
+              format: int64
+              type: integer
             routeARNs:
               additionalProperties:
                 type: string
@@ -2211,17 +2626,29 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: virtualservices.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.virtualServiceARN
+    description: The AppMesh VirtualService object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: VirtualService
     listKind: VirtualServiceList
     plural: virtualservices
     singular: virtualservice
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualService is the Schema for the virtualservices API
@@ -2269,8 +2696,15 @@ spec:
                 virtualNode:
                   description: The virtual node associated with a virtual service.
                   properties:
+                    virtualNodeARN:
+                      description: Amazon Resource Name to AppMesh VirtualNode object
+                        that is acting as a service provider. Exactly one of 'virtualNodeRef'
+                        or 'virtualNodeARN' must be specified.
+                      type: string
                     virtualNodeRef:
-                      description: The virtual node that is acting as a service provider.
+                      description: Reference to Kubernetes VirtualNode CR in cluster
+                        that is acting as a service provider. Exactly one of 'virtualNodeRef'
+                        or 'virtualNodeARN' must be specified.
                       properties:
                         name:
                           description: Name is the name of VirtualNode CR
@@ -2282,15 +2716,19 @@ spec:
                       required:
                       - name
                       type: object
-                  required:
-                  - virtualNodeRef
                   type: object
                 virtualRouter:
                   description: The virtual router associated with a virtual service.
                   properties:
+                    virtualRouterARN:
+                      description: Amazon Resource Name to AppMesh VirtualRouter object
+                        that is acting as a service provider. Exactly one of 'virtualRouterRef'
+                        or 'virtualRouterARN' must be specified.
+                      type: string
                     virtualRouterRef:
-                      description: The virtual router that is acting as a service
-                        provider.
+                      description: Reference to Kubernetes VirtualRouter CR in cluster
+                        that is acting as a service provider. Exactly one of 'virtualRouterRef'
+                        or 'virtualRouterARN' must be specified.
                       properties:
                         name:
                           description: Name is the name of VirtualRouter CR
@@ -2303,8 +2741,6 @@ spec:
                       required:
                       - name
                       type: object
-                  required:
-                  - virtualRouterRef
                   type: object
               type: object
           type: object
@@ -2338,6 +2774,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualService controller.
+              format: int64
+              type: integer
             virtualServiceARN:
               description: VirtualServiceARN is the AppMesh VirtualService object's
                 Amazon Resource Name.
@@ -2478,8 +2918,11 @@ webhooks:
       name: appmesh-webhook-service
       namespace: appmesh-system
       path: /mutate-v1-pod
-  failurePolicy: Ignore
+  failurePolicy: Fail
   name: mpod.appmesh.k8s.aws
+  namespaceSelector:
+    matchLabels:
+      appmesh.k8s.aws/sidecarInjectorWebhook: enabled
   rules:
   - apiGroups:
     - ""
@@ -2545,6 +2988,14 @@ rules:
   - ""
   resources:
   - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
   verbs:
   - get
   - list
@@ -2687,34 +3138,6 @@ rules:
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: appmesh-proxy-role
-rules:
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  name: appmesh-metrics-reader
-rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: appmesh-leader-election-rolebinding
@@ -2741,34 +3164,6 @@ subjects:
   name: default
   namespace: appmesh-system
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: appmesh-proxy-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: appmesh-proxy-role
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: appmesh-system
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: appmesh-controller-manager-metrics-service
-  namespace: appmesh-system
-spec:
-  ports:
-  - name: https
-    port: 8443
-    targetPort: https
-  selector:
-    control-plane: controller-manager
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -2779,38 +3174,41 @@ spec:
   - port: 443
     targetPort: 9443
   selector:
-    control-plane: controller-manager
+    control-plane: manager
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    control-plane: controller-manager
-  name: appmesh-controller-manager
+    control-plane: manager
+  name: appmesh-manager
   namespace: appmesh-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: manager
   template:
     metadata:
       annotations:
         prometheus.io/port: "8080"
         prometheus.io/scrape: "true"
       labels:
-        control-plane: controller-manager
+        control-plane: manager
     spec:
       containers:
       - args:
         - --enable-leader-election
         command:
         - /manager
-        image: m00nf1sh/misc:appmesh-v2-rc30
+        image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-manager:v1.0.0-rc4
         name: manager
         ports:
         - containerPort: 9443
           name: webhook-server
+          protocol: TCP
+        - containerPort: 8080
+          name: metrics-server
           protocol: TCP
         resources:
           limits:
